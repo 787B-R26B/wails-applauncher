@@ -12,14 +12,21 @@ function App() {
   );
 
   useEffect(() => {
-    GetScriptManifest().then((manifestJson) => {
-      try {
-        setScripts(JSON.parse(manifestJson));
-      } catch (e) {
-        console.error("failed to parse manifest:", e);
-        setResultText("Error: could not load script manifest");
-      }
-    });
+    GetScriptManifest()
+      .then((manifestJson) => {
+        try {
+          setScripts(JSON.parse(manifestJson));
+        } catch (e) {
+          console.error("failed to parse manifest:", e);
+          setResultText("Error: could not load script manifest");
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch manifest:", err);
+        setResultText(
+          "Error: could not fetch manifest. Is the server running?",
+        );
+      });
   }, []);
 
   function handleShowDetails(description) {

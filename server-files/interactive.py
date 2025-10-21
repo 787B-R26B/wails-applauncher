@@ -1,6 +1,0 @@
-print("Interactive Python script started.")
-name = input("Please enter your name: ")
-print(f"Hello, {name}!")
-color = input("What is your favorite color? ")
-print(f"Your favorite color is {color}.")
-print("Script finished.")

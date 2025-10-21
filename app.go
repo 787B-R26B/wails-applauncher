@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 )
+
+const serverBaseURL = "http://localhost:8080/"
 
 // App struct
 type App struct {
@@ -26,11 +30,16 @@ func (a *App) startup(ctx context.Context) {
 }
 
 func (a *App) GetScriptManifest() (string, error) {
-	content, err := os.ReadFile("server-files/manifest.json")
+	resp, err := http.Get(serverBaseURL + "manifest.json")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to fetch manifest: %w", err)
 	}
-	return string(content), nil
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read manifest body: %w", err)
+	}
+	return string(body), nil
 }
 
 func buildLinuxTerminalCmd(workDir, commandToRun string) *exec.Cmd {
@@ -57,18 +66,47 @@ func buildLinuxTerminalCmd(workDir, commandToRun string) *exec.Cmd {
 	return nil // No supported terminal found
 }
 
+func downloadScript(filename string) (string, error) {
+	resp, err := http.Get(serverBaseURL + filename)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	tempFile, err := os.CreateTemp("", "launcher-*"+filepath.Ext(filename))
+	if err != nil {
+		return "", err
+	}
+	defer tempFile.Close()
+
+	_, err = io.Copy(tempFile, resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return tempFile.Name(), nil
+}
+
 func (a *App) ExecuteScriptInTerminal(language string, filename string) error {
 	var commandToRun string
 
 	switch language {
 	case "shell":
 		commandToRun = filename
-	case "python":
-		ScriptPath, _ := filepath.Abs(filepath.Join("server-files", filename))
-		commandToRun = fmt.Sprintf("python3 -u %s", ScriptPath)
-	case "ruby":
-		ScriptPath, _ := filepath.Abs(filepath.Join("server-files", filename))
-		commandToRun = fmt.Sprintf("ruby %s", ScriptPath)
+	case "python", "ruby":
+		tempFilePath, err := downloadScript(filename)
+		if err != nil {
+			return fmt.Errorf("failed to download script: %w", err)
+		}
+		if language == "python" {
+			commandToRun = fmt.Sprintf("python3 -u %s", tempFilePath)
+		} else {
+			commandToRun = fmt.Sprintf("ruby %s", tempFilePath)
+		}
 	default:
 		return fmt.Errorf("unsupported language: %s", language)
 	}
