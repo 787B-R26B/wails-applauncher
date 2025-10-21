@@ -9,3 +9,11 @@ export function ExecuteScriptInTerminal(arg1, arg2) {
 export function GetScriptManifest() {
   return window['go']['main']['App']['GetScriptManifest']();
 }
+
+export function GetServerAddress() {
+  return window['go']['main']['App']['GetServerAddress']();
+}
+
+export function SetServerAddress(arg1) {
+  return window['go']['main']['App']['SetServerAddress'](arg1);
+}

@@ -134,3 +134,25 @@
     min-height: 100px;
     height: auto; /* Allow height to grow */
 }
+
+.server-config {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 80%;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.server-config label {
+    font-weight: bold;
+}
+
+.server-config input {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}

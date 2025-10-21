@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,11 +12,17 @@ import (
 	"runtime"
 )
 
-const serverBaseURL = "http://localhost:8080/"
+const defaultConfigFilename = "config.json"
+
+type Config struct {
+	ServerAddress string `json:"server_address"`
+}
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx        context.Context
+	config     Config
+	configPath string
 }
 
 // NewApp creates a new App application struct
@@ -27,10 +34,25 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		// Fallback to current directory
+		configDir = "."
+	}
+	a.configPath = filepath.Join(configDir, "wails-applauncher", defaultConfigFilename)
+
+	if err := a.loadConfig(); err != nil {
+		// If config doesn't exist, create it with default
+		a.config.ServerAddress = "http://localhost:8080/"
+		if err := a.saveConfig(); err != nil {
+			// Log this error, but the app can still run with the default.
+			fmt.Fprintf(os.Stderr, "Could not save default config: %v\n", err)
+		}
+	}
 }
 
 func (a *App) GetScriptManifest() (string, error) {
-	resp, err := http.Get(serverBaseURL + "manifest.json")
+	resp, err := http.Get(a.config.ServerAddress + "manifest.json")
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch manifest: %w", err)
 	}
@@ -40,6 +62,34 @@ func (a *App) GetScriptManifest() (string, error) {
 		return "", fmt.Errorf("failed to read manifest body: %w", err)
 	}
 	return string(body), nil
+}
+
+func (a *App) GetServerAddress() string {
+	return a.config.ServerAddress
+}
+
+func (a *App) SetServerAddress(address string) error {
+	a.config.ServerAddress = address
+	return a.saveConfig()
+}
+
+func (a *App) loadConfig() error {
+	data, err := os.ReadFile(a.configPath)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, &a.config)
+}
+
+func (a *App) saveConfig() error {
+	data, err := json.MarshalIndent(a.config, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(a.configPath), 0750); err != nil {
+		return err
+	}
+	return os.WriteFile(a.configPath, data, 0644)
 }
 
 func buildLinuxTerminalCmd(workDir, commandToRun string) *exec.Cmd {
@@ -52,9 +102,9 @@ func buildLinuxTerminalCmd(workDir, commandToRun string) *exec.Cmd {
 		args func(string) []string
 	}{
 		{"gnome-terminal", func(c string) []string { return []string{"--", "bash", "-c", c} }},
-		{"konsole", func(c string) []string { return []string{"-e", "bash", "-c", c} }},
+		{"konsole", func(c string) []string { return []string{"-", "e", "bash", "-c", c} }},
 		{"xfce4-terminal", func(c string) []string { return []string{"--command", fmt.Sprintf("bash -c '%s'", c)} }},
-		{"xterm", func(c string) []string { return []string{"-e", "bash", "-c", c} }},
+		{"xterm", func(c string) []string { return []string{"-", "e", "bash", "-c", c} }},
 	}
 
 	for _, t := range terminals {
@@ -66,8 +116,8 @@ func buildLinuxTerminalCmd(workDir, commandToRun string) *exec.Cmd {
 	return nil // No supported terminal found
 }
 
-func downloadScript(filename string) (string, error) {
-	resp, err := http.Get(serverBaseURL + filename)
+func (a *App) downloadScript(filename string) (string, error) {
+	resp, err := http.Get(a.config.ServerAddress + filename)
 	if err != nil {
 		return "", err
 	}
@@ -98,7 +148,7 @@ func (a *App) ExecuteScriptInTerminal(language string, filename string) error {
 	case "shell":
 		commandToRun = filename
 	case "python", "ruby":
-		tempFilePath, err := downloadScript(filename)
+		tempFilePath, err := a.downloadScript(filename)
 		if err != nil {
 			return fmt.Errorf("failed to download script: %w", err)
 		}
@@ -117,7 +167,7 @@ func (a *App) ExecuteScriptInTerminal(language string, filename string) error {
 	switch runtime.GOOS {
 	case "darwin":
 		appleScript := fmt.Sprintf(`tell app "Terminal" to do script "cd %s && %s"`, workDir, commandToRun)
-		cmd = exec.Command("osascript", "-e", appleScript)
+		cmd = exec.Command("osascript", "-", "e", appleScript)
 	case "windows":
 		cmd = exec.Command("cmd.exe", "/C", "start", "cmd.exe", "/K", commandToRun)
 	case "linux":

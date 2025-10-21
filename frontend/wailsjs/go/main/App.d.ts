@@ -4,3 +4,7 @@
 export function ExecuteScriptInTerminal(arg1:string,arg2:string):Promise<void>;
 
 export function GetScriptManifest():Promise<string>;
+
+export function GetServerAddress():Promise<string>;
+
+export function SetServerAddress(arg1:string):Promise<void>;

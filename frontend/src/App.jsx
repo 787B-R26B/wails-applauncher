@@ -3,6 +3,8 @@ import "./App.css";
 import {
   GetScriptManifest,
   ExecuteScriptInTerminal,
+  GetServerAddress,
+  SetServerAddress,
 } from "../wailsjs/go/main/App";
 
 function App() {
@@ -10,23 +12,33 @@ function App() {
   const [resultText, setResultText] = useState(
     "select a script to run, or view details",
   );
+  const [serverAddress, setServerAddress] = useState("");
+  const [newServerAddress, setNewServerAddress] = useState("");
 
   useEffect(() => {
-    GetScriptManifest()
-      .then((manifestJson) => {
-        try {
-          setScripts(JSON.parse(manifestJson));
-        } catch (e) {
-          console.error("failed to parse manifest:", e);
-          setResultText("Error: could not load script manifest");
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch manifest:", err);
-        setResultText(
-          "Error: could not fetch manifest. Is the server running?",
-        );
-      });
+    function fetchManifest() {
+      GetScriptManifest()
+        .then((manifestJson) => {
+          try {
+            setScripts(JSON.parse(manifestJson));
+          } catch (e) {
+            console.error("failed to parse manifest:", e);
+            setResultText("Error: could not load script manifest");
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch manifest:", err);
+          setResultText(
+            "Error: could not fetch manifest. Is the server running?",
+          );
+        });
+    }
+
+    GetServerAddress().then((address) => {
+      setServerAddress(address);
+      setNewServerAddress(address);
+      fetchManifest();
+    });
   }, []);
 
   function handleShowDetails(description) {
@@ -44,9 +56,48 @@ function App() {
       });
   }
 
+  function handleSaveServerAddress() {
+    SetServerAddress(newServerAddress)
+      .then(() => {
+        setServerAddress(newServerAddress);
+        setResultText("Server address updated successfully.");
+        // Refetch manifest after address change
+        GetScriptManifest()
+          .then((manifestJson) => {
+            try {
+              setScripts(JSON.parse(manifestJson));
+            } catch (e) {
+              console.error("failed to parse manifest:", e);
+              setResultText("Error: could not load script manifest");
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to fetch manifest:", err);
+            setResultText(
+              "Error: could not fetch manifest. Is the server running?",
+            );
+          });
+      })
+      .catch((err) => {
+        setResultText(`Error updating server address: ${err}`);
+      });
+  }
+
   return (
     <div id="App">
       <h1>Wails Script Launcher</h1>
+      <div className="server-config">
+        <label htmlFor="server-address">Server Address:</label>
+        <input
+          id="server-address"
+          type="text"
+          value={newServerAddress}
+          onChange={(e) => setNewServerAddress(e.target.value)}
+        />
+        <button className="btn" onClick={handleSaveServerAddress}>
+          Save
+        </button>
+      </div>
       <div className="script-list">
         {scripts.map((script, index) => (
           <div className="script-item" key={index}>
