@@ -33,6 +33,30 @@ func (a *App) GetScriptManifest() (string, error) {
 	return string(content), nil
 }
 
+func buildLinuxTerminalCmd(workDir, commandToRun string) *exec.Cmd {
+	// The command to run, with a pause at the end to keep the window open.
+	fullCommand := fmt.Sprintf("cd %s && %s; echo; echo 'Script finished. Press Enter to close.'; read", workDir, commandToRun)
+
+	// Terminal emulators and their command-line argument formats.
+	terminals := []struct {
+		path string
+		args func(string) []string
+	}{
+		{"gnome-terminal", func(c string) []string { return []string{"--", "bash", "-c", c} }},
+		{"konsole", func(c string) []string { return []string{"-e", "bash", "-c", c} }},
+		{"xfce4-terminal", func(c string) []string { return []string{"--command", fmt.Sprintf("bash -c '%s'", c)} }},
+		{"xterm", func(c string) []string { return []string{"-e", "bash", "-c", c} }},
+	}
+
+	for _, t := range terminals {
+		if path, err := exec.LookPath(t.path); err == nil {
+			args := t.args(fullCommand)
+			return exec.Command(path, args...)
+		}
+	}
+	return nil // No supported terminal found
+}
+
 func (a *App) ExecuteScriptInTerminal(language string, filename string) error {
 	var commandToRun string
 
@@ -59,8 +83,10 @@ func (a *App) ExecuteScriptInTerminal(language string, filename string) error {
 	case "windows":
 		cmd = exec.Command("cmd.exe", "/C", "start", "cmd.exe", "/K", commandToRun)
 	case "linux":
-		linuxCommand := fmt.Sprintf("%s; echo; echo \"Script finished. Press Enter to close.\"; read", commandToRun)
-		cmd = exec.Command("gnome-terminal", "--", "bash", "-c", linuxCommand)
+		cmd = buildLinuxTerminalCmd(workDir, commandToRun)
+		if cmd == nil {
+			return fmt.Errorf("could not find a supported terminal on Linux (gnome-terminal, konsole, xfce4-terminal, xterm)")
+		}
 	default:
 		return fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
