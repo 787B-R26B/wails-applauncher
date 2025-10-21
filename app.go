@@ -38,9 +38,9 @@ func (a *App) ExecuteScript(language string, filename string) (string, error) {
 
 	switch language {
 	case "shell":
-		parts := strings.Split(filename, "")
+		parts := strings.Split(filename, " ")
 		head := parts[0]
-		parts = parts[:1]
+		parts = parts[1:]
 		cmd = exec.Command(head, parts...)
 	case "python":
 		ScriptPath, err := filepath.Abs(filepath.Join("server-files", filename))
