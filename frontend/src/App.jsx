@@ -5,14 +5,16 @@ import { GetScriptManifest, ExecuteScript } from "../wailsjs/go/main/App";
 
 function App() {
   const [scripts, setScripts] = useState([]);
-  const [resultText, setResultText] = useState("select a scritpt to run.");
+  const [resultText, setResultText] = useState(
+    "select a script to run, or view details",
+  );
 
   useEffect(() => {
     GetScriptManifest()
       .then((manifestJson) => {
         try {
-          const scripts = JSON.parse(manifestJson);
-          setScripts(scripts);
+          const manifest = JSON.parse(manifestJson);
+          setScripts(manifest);
         } catch (e) {
           console.error("failed to parse manifest:", e);
           setResultText("Error: could not load script manifest");
@@ -23,6 +25,10 @@ function App() {
         setResultText("Error: could not fetch manifest");
       });
   }, []);
+
+  function handleShowDetails(description) {
+    setResultText(description);
+  }
 
   function handleExecuteScript(language, filename) {
     setResultText(`Executing '${filename}'...`);
@@ -43,16 +49,23 @@ function App() {
           <div className="script-item" key={index}>
             <div className="script-info">
               <div className="script-name">{script.name}</div>
-              <div className="script-desc">{script.description}</div>
             </div>
-            <button
-              className="btn"
-              onClick={() =>
-                handleExecuteScript(script.language, script.filename)
-              }
-            >
-              Run
-            </button>
+            <div className="button-group">
+              <button
+                className="btn"
+                onClick={() => handleShowDetails(script.description)}
+              >
+                Details
+              </button>
+              <button
+                className="btn"
+                onClick={() =>
+                  handleExecuteScript(script.language, script.filename)
+                }
+              >
+                Run
+              </button>
+            </div>
           </div>
         ))}
       </div>
