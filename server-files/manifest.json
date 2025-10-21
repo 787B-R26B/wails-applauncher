@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Python Hello",
+    "description": "A simple Python script that prints a greeting.",
+    "filename": "hello.py",
+    "language": "python"
+  },
+  {
+    "name": "Ruby Hello",
+    "description": "A simple Ruby script that prints a greeting.",
+    "filename": "hello.rb",
+    "language": "ruby"
+  },
+  {
+    "name": "List Current Directory",
+    "description": "Runs 'ls -l' to see the contents of the current directory.",
+    "filename": "ls -l",
+    "language": "shell"
+  }
+]

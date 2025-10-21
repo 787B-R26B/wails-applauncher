@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -23,17 +25,39 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
+func (a *App) GetScriptManifest() (string, error) {
+	content, err := os.ReadFile("server-files/manifest.json")
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
 }
 
-func (a *App) ExecuteCommand(command string) (string, error) {
-	parts := strings.Split(command, " ")
-	head := parts[0]
-	parts = parts[1:]
+func (a *App) ExecuteScript(language string, filename string) (string, error) {
+	var cmd *exec.Cmd
 
-	cmd := exec.Command(head, parts...)
+	switch language {
+	case "shell":
+		parts := strings.Split(filename, "")
+		head := parts[0]
+		parts = parts[:1]
+		cmd = exec.Command(head, parts...)
+	case "python":
+		ScriptPath, err := filepath.Abs(filepath.Join("server-files", filename))
+		if err != nil {
+			return "", fmt.Errorf("could not get absolute path for script: %w", err)
+		}
+		cmd = exec.Command("python3", ScriptPath)
+	case "ruby":
+		ScriptPath, err := filepath.Abs(filepath.Join("server-files", filename))
+		if err != nil {
+			return "", fmt.Errorf("could not get absolute path for script: %w", err)
+		}
+		cmd = exec.Command(language, ScriptPath)
+
+	default:
+		return "", fmt.Errorf("unsupported language: %s", language)
+	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return string(output), err
