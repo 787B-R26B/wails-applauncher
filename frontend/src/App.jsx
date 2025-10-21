@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import logo from "./assets/images/logo-universal.png";
 import "./App.css";
-import { GetScriptManifest, ExecuteScript } from "../wailsjs/go/main/App";
+import {
+  GetScriptManifest,
+  ExecuteScriptInTerminal,
+} from "../wailsjs/go/main/App";
 
 function App() {
   const [scripts, setScripts] = useState([]);
@@ -10,20 +12,14 @@ function App() {
   );
 
   useEffect(() => {
-    GetScriptManifest()
-      .then((manifestJson) => {
-        try {
-          const manifest = JSON.parse(manifestJson);
-          setScripts(manifest);
-        } catch (e) {
-          console.error("failed to parse manifest:", e);
-          setResultText("Error: could not load script manifest");
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        setResultText("Error: could not fetch manifest");
-      });
+    GetScriptManifest().then((manifestJson) => {
+      try {
+        setScripts(JSON.parse(manifestJson));
+      } catch (e) {
+        console.error("failed to parse manifest:", e);
+        setResultText("Error: could not load script manifest");
+      }
+    });
   }, []);
 
   function handleShowDetails(description) {
@@ -32,9 +28,9 @@ function App() {
 
   function handleExecuteScript(language, filename) {
     setResultText(`Executing '${filename}'...`);
-    ExecuteScript(language, filename)
-      .then((result) => {
-        setResultText(result);
+    ExecuteScriptInTerminal(language, filename)
+      .then(() => {
+        setResultText("Script executed successfully");
       })
       .catch((err) => {
         setResultText(err);

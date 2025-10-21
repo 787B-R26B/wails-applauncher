@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
+	"runtime"
 )
 
 // App struct
@@ -33,34 +33,37 @@ func (a *App) GetScriptManifest() (string, error) {
 	return string(content), nil
 }
 
-func (a *App) ExecuteScript(language string, filename string) (string, error) {
-	var cmd *exec.Cmd
+func (a *App) ExecuteScriptInTerminal(language string, filename string) error {
+	var commandToRun string
 
 	switch language {
 	case "shell":
-		parts := strings.Split(filename, " ")
-		head := parts[0]
-		parts = parts[1:]
-		cmd = exec.Command(head, parts...)
+		commandToRun = filename
 	case "python":
-		ScriptPath, err := filepath.Abs(filepath.Join("server-files", filename))
-		if err != nil {
-			return "", fmt.Errorf("could not get absolute path for script: %w", err)
-		}
-		cmd = exec.Command("python3", ScriptPath)
+		ScriptPath, _ := filepath.Abs(filepath.Join("server-files", filename))
+		commandToRun = fmt.Sprintf("python3 -u %s", ScriptPath)
 	case "ruby":
-		ScriptPath, err := filepath.Abs(filepath.Join("server-files", filename))
-		if err != nil {
-			return "", fmt.Errorf("could not get absolute path for script: %w", err)
-		}
-		cmd = exec.Command(language, ScriptPath)
-
+		ScriptPath, _ := filepath.Abs(filepath.Join("server-files", filename))
+		commandToRun = fmt.Sprintf("ruby %s", ScriptPath)
 	default:
-		return "", fmt.Errorf("unsupported language: %s", language)
+		return fmt.Errorf("unsupported language: %s", language)
 	}
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return string(output), err
+
+	var cmd *exec.Cmd
+	workDir, _ := os.Getwd()
+
+	switch runtime.GOOS {
+	case "darwin":
+		appleScript := fmt.Sprintf(`tell app "Terminal" to do script "cd %s && %s"`, workDir, commandToRun)
+		cmd = exec.Command("osascript", "-e", appleScript)
+	case "windows":
+		cmd = exec.Command("cmd.exe", "/C", "start", "cmd.exe", "/K", commandToRun)
+	case "linux":
+		linuxCommand := fmt.Sprintf("%s; echo; echo \"Script finished. Press Enter to close.\"; read", commandToRun)
+		cmd = exec.Command("gnome-terminal", "--", "bash", "-c", linuxCommand)
+	default:
+		return fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
-	return string(output), nil
+
+	return cmd.Start()
 }
