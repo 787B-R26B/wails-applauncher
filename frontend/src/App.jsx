@@ -37,7 +37,6 @@ function App() {
 
   return (
     <div id="App">
-      <img src={logo} id="logo" alt="logo" />
       <h1>Wails Script Launcher</h1>
       <div className="script-list">
         {scripts.map((script, index) => (
