@@ -16,5 +16,11 @@
     "description": "Runs 'ls -l' to see the contents of the current directory.",
     "filename": "ls -l",
     "language": "shell"
+  },
+  {
+    "name": "C Hello",
+    "description": "A simple C program that prints a greeting. Requires gcc to be installed and in the system's PATH.",
+    "filename": "hello.c",
+    "language": "c"
   }
 ]

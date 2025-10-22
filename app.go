@@ -119,23 +119,27 @@ func buildLinuxTerminalCmd(workDir, commandToRun string) *exec.Cmd {
 func (a *App) downloadScript(filename string) (string, error) {
 	resp, err := http.Get(a.config.ServerAddress + filename)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to start download: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("bad status: %s", resp.Status)
+		return "", fmt.Errorf("bad status from server: %s", resp.Status)
 	}
 
 	tempFile, err := os.CreateTemp("", "launcher-*"+filepath.Ext(filename))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer tempFile.Close()
 
-	_, err = io.Copy(tempFile, resp.Body)
+	bytesCopied, err := io.Copy(tempFile, resp.Body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to write to temp file: %w", err)
+	}
+
+	if bytesCopied == 0 {
+		return "", fmt.Errorf("downloaded file is empty")
 	}
 
 	return tempFile.Name(), nil
@@ -157,6 +161,34 @@ func (a *App) ExecuteScriptInTerminal(language string, filename string) error {
 		} else {
 			commandToRun = fmt.Sprintf("ruby %s", tempFilePath)
 		}
+	case "c":
+		sourcePath, err := a.downloadScript(filename)
+		if err != nil {
+			return fmt.Errorf("failed to download c source: %w", err)
+		}
+		// Assume gcc is installed.
+		outputPath := sourcePath + ".out"
+		if runtime.GOOS == "windows" {
+			outputPath = sourcePath + ".exe"
+		}
+
+		cmd := exec.Command("gcc", sourcePath, "-o", outputPath)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("failed to compile c code: %s, err: %w", string(output), err)
+		}
+		if err := os.Chmod(outputPath, 0755); err != nil {
+			return fmt.Errorf("failed to make c output executable: %w", err)
+		}
+		commandToRun = outputPath
+	case "binary":
+		tempFilePath, err := a.downloadScript(filename)
+		if err != nil {
+			return fmt.Errorf("failed to download binary: %w", err)
+		}
+		if err := os.Chmod(tempFilePath, 0755); err != nil {
+			return fmt.Errorf("failed to make binary executable: %w", err)
+		}
+		commandToRun = tempFilePath
 	default:
 		return fmt.Errorf("unsupported language: %s", language)
 	}
