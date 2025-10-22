@@ -199,7 +199,7 @@ func (a *App) ExecuteScriptInTerminal(language string, filename string) error {
 	switch runtime.GOOS {
 	case "darwin":
 		appleScript := fmt.Sprintf(`tell app "Terminal" to do script "cd %s && %s"`, workDir, commandToRun)
-		cmd = exec.Command("osascript", "-", "e", appleScript)
+		cmd = exec.Command("osascript", "-e", appleScript)
 	case "windows":
 		cmd = exec.Command("cmd.exe", "/C", "start", "cmd.exe", "/K", commandToRun)
 	case "linux":
