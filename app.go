@@ -162,6 +162,9 @@ func (a *App) ExecuteScriptInTerminal(language string, filename string) error {
 			commandToRun = fmt.Sprintf("ruby %s", tempFilePath)
 		}
 	case "c":
+		if _, err := exec.LookPath("gcc"); err != nil {
+			return fmt.Errorf("gcc not found. Please install gcc to compile C code")
+		}
 		sourcePath, err := a.downloadScript(filename)
 		if err != nil {
 			return fmt.Errorf("failed to download c source: %w", err)
