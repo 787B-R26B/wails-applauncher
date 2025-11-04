@@ -1,18 +1,35 @@
-#app {
-    height: 100vh;
+.App {
     text-align: center;
 }
 
-#logo {
-    display: block;
-    width: 50%;
-    height: 50%;
-    margin: auto;
-    padding: 10% 0 0;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
+.logo {
+    height: 6em;
+    padding: 1.5em;
+    will-change: filter;
+    transition: filter 300ms;
+}
+
+.logo:hover {
+    filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+    filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
 }
 
 .result {
@@ -21,39 +38,121 @@
     margin: 1.5rem auto;
 }
 
-.input-box .btn {
-    width: 60px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 3px;
+.input-box {
+    display: flex;
+    gap: 0.5rem;
+    margin: 2rem auto;
+    width: 250px;
+}
+
+.input {
     border: none;
-    margin: 0 0 0 20px;
-    padding: 0 8px;
+    border-radius: 4px;
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+    width: 100%;
+}
+
+.btn {
+    background-color: #1c84f3;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
     cursor: pointer;
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+    text-transform: uppercase;
 }
 
-.input-box .btn:hover {
-    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-    color: #333333;
+.btn:hover {
+    background-color: #1976d2;
 }
 
-.input-box .input {
-    border: none;
-    border-radius: 3px;
-    outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    -webkit-font-smoothing: antialiased;
+.button-group {
+    display: flex;
+    gap: 10px;
 }
 
-.input-box .input:hover {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
+.interactive-form {
+    margin-top: 20px;
+    width: 80%;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.input-box .input:focus {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
+/* Added Styles for Script Launcher */
+.script-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 80%;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.script-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: #2e3a4b;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.script-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.script-name {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.script-desc {
+    font-size: 0.9em;
+    color: #b0b8c4;
+}
+
+#result {
+    margin-top: 20px;
+    width: 80%;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 15px;
+    background-color: #1a222c;
+    border-radius: 8px;
+    text-align: left;
+    white-space: pre-wrap; /* Ensures long lines wrap */
+    word-wrap: break-word;
+    min-height: 100px;
+    height: auto; /* Allow height to grow */
+}
+
+.server-config {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 80%;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.server-config label {
+    font-weight: bold;
+}
+
+.server-config input {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
 }
