@@ -1,4 +1,10 @@
-build/bin
-node_modules
-frontend/dist
-frontend/package.json.md5
+# Client-specific ignores
+client/build/bin
+node_modules/
+client/frontend/dist/
+client/frontend/package.json.md5
+
+# Server-specific ignores
+# Ignore the compiled server binary
+server/server
+server/wails-applauncher-client
