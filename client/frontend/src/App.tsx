@@ -1,12 +1,13 @@
 import { Container, Title, Stack } from "@mantine/core";
 import { useServerAddress } from "./hooks/useServerAddress";
-import { useScriptRunner } from "./hooks/useScriptRunner";
-import { ServerAddressForm } from "./components/ServerAddressForm";
-import { ScriptList } from "./components/ScriptList";
+import { useApplications } from "./hooks/useApplications"; // Renamed
+import { ServerAddressForm } from "./components/ServerAddressForm"; // Restored
+import { ApplicationList } from "./components/ApplicationList";
 import { OutputDisplay } from "./components/OutputDisplay";
 import { useEffect } from "react";
 
 function App() {
+  // Restored server address logic
   const {
     serverAddress,
     newServerAddress,
@@ -14,40 +15,38 @@ function App() {
     handleSaveServerAddress,
   } = useServerAddress();
 
+  // Applications logic now depends on the server address
   const {
-    scripts,
+    applications,
     resultText,
-    fetchManifest,
+    fetchApplications,
     handleShowDetails,
-    handleExecuteScript,
-  } = useScriptRunner(serverAddress);
+    handleDownloadArtifact,
+  } = useApplications(serverAddress);
 
+  // Fetch applications whenever the address changes
   useEffect(() => {
-    fetchManifest();
-  }, [fetchManifest]);
-
-  const handleSaveAddress = () => {
-    handleSaveServerAddress();
-    fetchManifest();
-  };
+    fetchApplications();
+  }, [serverAddress, fetchApplications]);
 
   return (
     <Container p="md">
       <Stack>
         <Title order={1} style={{ textAlign: "center" }}>
-          Wails Script Launcher
+          Wails App Launcher
         </Title>
 
+        {/* Restored server address form */}
         <ServerAddressForm
           newServerAddress={newServerAddress}
           setNewServerAddress={setNewServerAddress}
-          handleSaveServerAddress={handleSaveAddress}
+          handleSaveServerAddress={handleSaveServerAddress}
         />
 
-        <ScriptList
-          scripts={scripts}
+        <ApplicationList
+          applications={applications}
           handleShowDetails={handleShowDetails}
-          handleExecuteScript={handleExecuteScript}
+          handleDownloadArtifact={handleDownloadArtifact}
         />
 
         <OutputDisplay resultText={resultText} />
