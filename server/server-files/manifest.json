@@ -5,7 +5,7 @@
     "artifact_type": "zip",
     "build_command": "mkdir -p ./server-files/dist && zip -j ./server-files/dist/python_hello.zip ./server-files/hello.py",
     "artifact_path": "./server-files/dist/python_hello.zip",
-    "run_command": "python hello.py"
+    "run_command": "python3 hello.py"
   },
   {
     "name": "Ruby Hello",
