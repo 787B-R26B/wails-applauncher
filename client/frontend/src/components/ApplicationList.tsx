@@ -1,16 +1,16 @@
 import { Card, Text, Button, Group, Stack } from "@mantine/core";
-import { Application } from "../hooks/useApplications"; // Import the shared interface
+import { Application } from "../hooks/useApplications";
 
 interface ApplicationListProps {
   applications: Application[];
   handleShowDetails: (description: string) => void;
-  handleDownloadArtifact: (name: string) => void;
+  handleRunApplication: (app: Application) => void;
 }
 
 export function ApplicationList({
   applications,
   handleShowDetails,
-  handleDownloadArtifact,
+  handleRunApplication,
 }: ApplicationListProps) {
   return (
     <Stack gap="sm">
@@ -25,9 +25,7 @@ export function ApplicationList({
               >
                 Details
               </Button>
-              <Button onClick={() => handleDownloadArtifact(app.name)}>
-                Download
-              </Button>
+              <Button onClick={() => handleRunApplication(app)}>Run</Button>
             </Group>
           </Group>
         </Card>

@@ -4,20 +4,23 @@
     "description": "A simple Python script that prints a greeting.",
     "artifact_type": "zip",
     "build_command": "mkdir -p ./server-files/dist && zip -j ./server-files/dist/python_hello.zip ./server-files/hello.py",
-    "artifact_path": "./server-files/dist/python_hello.zip"
+    "artifact_path": "./server-files/dist/python_hello.zip",
+    "run_command": "python hello.py"
   },
   {
     "name": "Ruby Hello",
     "description": "A simple Ruby script that prints a greeting.",
     "artifact_type": "zip",
     "build_command": "mkdir -p ./server-files/dist && zip -j ./server-files/dist/ruby_hello.zip ./server-files/hello.rb",
-    "artifact_path": "./server-files/dist/ruby_hello.zip"
+    "artifact_path": "./server-files/dist/ruby_hello.zip",
+    "run_command": "ruby hello.rb"
   },
   {
     "name": "C Hello",
     "description": "A simple C program that prints a greeting. Requires gcc to be installed and in the system's PATH.",
     "artifact_type": "binary",
     "build_command": "mkdir -p ./server-files/dist && gcc -o ./server-files/dist/c_hello ./server-files/hello.c",
-    "artifact_path": "./server-files/dist/c_hello"
+    "artifact_path": "./server-files/dist/c_hello",
+    "run_command": "c_hello"
   }
 ]

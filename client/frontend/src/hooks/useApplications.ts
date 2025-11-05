@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { notifications } from "@mantine/notifications";
+import { SaveAndRunArtifact } from "../../wailsjs/go/main/App";
 
 export interface Application {
   name: string;
@@ -7,17 +8,19 @@ export interface Application {
   artifact_type: string;
   build_command: string;
   artifact_path: string;
+  run_command: string;
 }
 
 export function useApplications(serverAddress: string) {
   const [applications, setApplications] = useState<Application[]>([]);
   const [resultText, setResultText] = useState<string>(
-    "Select an application to download, or view details",
+    "Select an application to run, or view details",
   );
 
   const fetchApplications = useCallback(() => {
     if (!serverAddress) return;
-    fetch(`${serverAddress}/api/v1/applications`)
+    const cleanedAddress = serverAddress.replace(/\/$/, "");
+    fetch(`${cleanedAddress}/api/v1/applications`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Server responded with ${response.status}`);
@@ -41,7 +44,7 @@ export function useApplications(serverAddress: string) {
     setResultText(description);
   };
 
-  const handleDownloadArtifact = (name: string) => {
+  const handleRunApplication = async (app: Application) => {
     if (!serverAddress) {
       notifications.show({
         title: "Error",
@@ -50,28 +53,45 @@ export function useApplications(serverAddress: string) {
       });
       return;
     }
-    setResultText(`Downloading artifact for '${name}'...`);
-    const url = `${serverAddress}/api/v1/applications/${encodeURIComponent(
-      name,
-    )}/artifact`;
+    setResultText(`Preparing to run '${app.name}'...`);
 
-    // Create a temporary anchor element to trigger the download
-    const link = document.createElement("a");
-    link.href = url;
+    try {
+      // 1. Fetch artifact from server
+      const cleanedAddress = serverAddress.replace(/\/$/, "");
+      const artifactUrl = `${cleanedAddress}/api/v1/applications/${encodeURIComponent(
+        app.name,
+      )}/artifact`;
+      const response = await fetch(artifactUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch artifact: ${await response.text()}`);
+      }
+      const blob = await response.blob();
+      const fileData = new Uint8Array(await blob.arrayBuffer());
 
-    // The 'download' attribute is not strictly necessary if Content-Disposition is set,
-    // but it can help.
-    // link.setAttribute('download', ''); // Optional
+      // 2. Pass data to client's Go backend to save and run
+      setResultText(`Executing '${app.name}'...`);
+      const output = await SaveAndRunArtifact(
+        app.artifact_type === "zip",
+        Array.from(fileData), // Convert Uint8Array to a plain array for Wails
+        app.run_command,
+      );
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    notifications.show({
-      title: "Download Started",
-      message: `Your download for "${name}" should now be starting.`,
-      color: "green",
-    });
+      // 3. Display result
+      setResultText(output);
+      notifications.show({
+        title: "Execution Finished",
+        message: `'${app.name}' finished running.`,
+        color: "green",
+      });
+    } catch (err: any) {
+      console.error("Failed to run application:", err);
+      setResultText(err.message);
+      notifications.show({
+        title: "Error",
+        message: err.message,
+        color: "red",
+      });
+    }
   };
 
   return {
@@ -79,6 +99,6 @@ export function useApplications(serverAddress: string) {
     resultText,
     fetchApplications,
     handleShowDetails,
-    handleDownloadArtifact,
+    handleRunApplication,
   };
 }

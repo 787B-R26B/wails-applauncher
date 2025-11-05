@@ -21,7 +21,7 @@ function App() {
     resultText,
     fetchApplications,
     handleShowDetails,
-    handleDownloadArtifact,
+    handleRunApplication, // Corrected name
   } = useApplications(serverAddress);
 
   // Fetch applications whenever the address changes
@@ -46,7 +46,7 @@ function App() {
         <ApplicationList
           applications={applications}
           handleShowDetails={handleShowDetails}
-          handleDownloadArtifact={handleDownloadArtifact}
+          handleRunApplication={handleRunApplication} // Changed
         />
 
         <OutputDisplay resultText={resultText} />
