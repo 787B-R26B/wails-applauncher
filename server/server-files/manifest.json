@@ -2,25 +2,22 @@
   {
     "name": "Python Hello",
     "description": "A simple Python script that prints a greeting.",
-    "filename": "hello.py",
-    "language": "python"
+    "artifact_type": "zip",
+    "build_command": "mkdir -p ./server-files/dist && zip -j ./server-files/dist/python_hello.zip ./server-files/hello.py",
+    "artifact_path": "./server-files/dist/python_hello.zip"
   },
   {
     "name": "Ruby Hello",
     "description": "A simple Ruby script that prints a greeting.",
-    "filename": "hello.rb",
-    "language": "ruby"
-  },
-  {
-    "name": "List Current Directory",
-    "description": "Runs 'ls -l' to see the contents of the current directory.",
-    "filename": "ls -l",
-    "language": "shell"
+    "artifact_type": "zip",
+    "build_command": "mkdir -p ./server-files/dist && zip -j ./server-files/dist/ruby_hello.zip ./server-files/hello.rb",
+    "artifact_path": "./server-files/dist/ruby_hello.zip"
   },
   {
     "name": "C Hello",
     "description": "A simple C program that prints a greeting. Requires gcc to be installed and in the system's PATH.",
-    "filename": "hello.c",
-    "language": "c"
+    "artifact_type": "binary",
+    "build_command": "mkdir -p ./server-files/dist && gcc -o ./server-files/dist/c_hello ./server-files/hello.c",
+    "artifact_path": "./server-files/dist/c_hello"
   }
 ]
