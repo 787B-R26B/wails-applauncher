@@ -1,4 +1,4 @@
-import { TextInput, Button, Group, Paper } from "@mantine/core";
+import { TextInput, Button, Group, Card } from "@mantine/core";
 
 interface ServerAddressFormProps {
   newServerAddress: string;
@@ -12,18 +12,22 @@ export function ServerAddressForm({
   handleSaveServerAddress,
 }: ServerAddressFormProps) {
   return (
-    <Paper withBorder p="md" radius="md">
+    <Card shadow="sm" padding="lg" radius="md" withBorder>
       <Group>
         <TextInput
           label="Server Address"
+          placeholder="http://localhost:8080"
           value={newServerAddress}
           onChange={(event) => setNewServerAddress(event.currentTarget.value)}
           style={{ flex: 1 }}
         />
-        <Button onClick={handleSaveServerAddress} mt="lg">
+        <Button
+          onClick={handleSaveServerAddress}
+          style={{ alignSelf: "flex-end" }}
+        >
           Save
         </Button>
       </Group>
-    </Paper>
+    </Card>
   );
 }
