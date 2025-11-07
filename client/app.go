@@ -103,7 +103,15 @@ func (a *App) SaveAndRunArtifact(isZip bool, fileData []byte, runCommand string)
 		}
 
 	case "linux":
-		cmd = exec.Command("gnome-terminal", "--", commandToRunInTerminal)
+		var script string
+		if workingDir != "" {
+			script = fmt.Sprintf("cd '%s' && %s", workingDir, commandToRunInTerminal)
+		} else {
+			script = commandToRunInTerminal
+		}
+		escapedScript := strings.ReplaceAll(script, `"`, `\\\"`)
+		cmd = exec.Command("gnome-terminal", "-e", fmt.Sprintf("bash -c \"%s\"", escapedScript))
+
 		if workingDir != "" {
 			cmd.Dir = workingDir
 		}
