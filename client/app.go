@@ -102,6 +102,12 @@ func (a *App) SaveAndRunArtifact(isZip bool, fileData []byte, runCommand string)
 			cmd.Dir = workingDir
 		}
 
+	case "linux":
+		cmd = exec.Command("gnome-terminal", "--", commandToRunInTerminal)
+		if workingDir != "" {
+			cmd.Dir = workingDir
+		}
+
 	default:
 		return "", fmt.Errorf("unsupported OS for terminal execution: %s", runtime.GOOS)
 	}
