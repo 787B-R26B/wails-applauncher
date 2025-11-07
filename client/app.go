@@ -102,6 +102,19 @@ func (a *App) SaveAndRunArtifact(isZip bool, fileData []byte, runCommand string)
 			cmd.Dir = workingDir
 		}
 
+	case "linux":
+		var script string
+		if workingDir != "" {
+			script = fmt.Sprintf("cd '%s' && %s", workingDir, commandToRunInTerminal)
+		} else {
+			script = commandToRunInTerminal
+		}
+		cmd = exec.Command("x-terminal-emulator", "-e", "bash", "-c", script)
+
+		if workingDir != "" {
+			cmd.Dir = workingDir
+		}
+
 	default:
 		return "", fmt.Errorf("unsupported OS for terminal execution: %s", runtime.GOOS)
 	}
