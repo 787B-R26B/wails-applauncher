@@ -109,8 +109,7 @@ func (a *App) SaveAndRunArtifact(isZip bool, fileData []byte, runCommand string)
 		} else {
 			script = commandToRunInTerminal
 		}
-		escapedScript := strings.ReplaceAll(script, `"`, `\\\"`)
-		cmd = exec.Command("gnome-terminal", "-e", fmt.Sprintf("bash -c \"%s\"", escapedScript))
+		cmd = exec.Command("x-terminal-emulator", "-e", "bash", "-c", script)
 
 		if workingDir != "" {
 			cmd.Dir = workingDir
