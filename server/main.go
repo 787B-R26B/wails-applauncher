@@ -26,22 +26,15 @@ const (
 	manifestPath   = serverFilesDir + "/manifest.json"
 )
 
+var (
+	appList []App
+)
+
 // --- Handlers ---
 
 func listApplications(w http.ResponseWriter, r *http.Request) {
-	manifestPath := manifestPath
-	content, err := os.ReadFile(manifestPath)
-	if err != nil {
-		http.Error(w, "Failed to read manifest.json", http.StatusInternalServerError)
-		return
-	}
-	var temp []App
-	if err := json.Unmarshal(content, &temp); err != nil {
-		http.Error(w, "Failed to parse manifest.json", http.StatusInternalServerError)
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(content)
+	json.NewEncoder(w).Encode(appList)
 }
 
 func getArtifact(w http.ResponseWriter, r *http.Request) {
@@ -57,21 +50,10 @@ func getArtifact(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := os.ReadFile(manifestPath)
-	if err != nil {
-		http.Error(w, "Failed to read manifest", http.StatusInternalServerError)
-		return
-	}
-	var apps []App
-	if err := json.Unmarshal(content, &apps); err != nil {
-		http.Error(w, "Failed to parse manifest", http.StatusInternalServerError)
-		return
-	}
-
 	var targetApp *App
-	for i := range apps {
-		if apps[i].Name == appName {
-			targetApp = &apps[i]
+	for i := range appList {
+		if appList[i].Name == appName {
+			targetApp = &appList[i]
 			break
 		}
 	}
@@ -82,6 +64,7 @@ func getArtifact(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Building '%s' with: %s", targetApp.Name, targetApp.BuildCommand)
 	cmd := exec.Command("bash", "-c", targetApp.BuildCommand)
+	cmd.Dir = serverFilesDir // Set working directory for the build command
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("Build failed for '%s': %s\n%s", targetApp.Name, err, string(output))
@@ -90,9 +73,10 @@ func getArtifact(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Build successful for '%s'", targetApp.Name)
 
-	fileName := filepath.Base(targetApp.ArtifactPath)
+	artifactAbsPath := filepath.Join(serverFilesDir, targetApp.ArtifactPath)
+	fileName := filepath.Base(artifactAbsPath)
 	w.Header().Set("Content-Disposition", "attachment; filename=\""+fileName+"\"")
-	http.ServeFile(w, r, targetApp.ArtifactPath)
+	http.ServeFile(w, r, artifactAbsPath)
 }
 
 // --- CORS Middleware ---
@@ -114,6 +98,16 @@ func corsMiddleware(handler http.Handler) http.Handler {
 // --- Main ---
 
 func main() {
+	// Load manifest at startup
+	content, err := os.ReadFile(manifestPath)
+	if err != nil {
+		log.Fatalf("Failed to read manifest file at %s: %s", manifestPath, err)
+	}
+	if err := json.Unmarshal(content, &appList); err != nil {
+		log.Fatalf("Failed to parse manifest file: %s", err)
+	}
+	log.Printf("Loaded %d applications from manifest.", len(appList))
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/status", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `Server is running`)
