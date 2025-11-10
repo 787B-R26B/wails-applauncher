@@ -12,7 +12,6 @@ import (
 	"strings"
 )
 
-// Appはmanifest.json内の各アプリケーションの構造を定義します
 type App struct {
 	Name         string `json:"name"`
 	Description  string `json:"description"`

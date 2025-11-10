@@ -8,3 +8,4 @@ client/frontend/package.json.md5
 # Ignore the compiled server binary
 server/server
 server/wails-applauncher-client
+server/server-files/dist
