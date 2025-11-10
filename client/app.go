@@ -104,10 +104,11 @@ func (a *App) SaveAndRunArtifact(isZip bool, fileData []byte, runCommand string)
 
 	case "linux":
 		var script string
+		// Append '; exec bash' to keep the terminal open after the command finishes.
 		if workingDir != "" {
-			script = fmt.Sprintf("cd '%s' && %s", workingDir, commandToRunInTerminal)
+			script = fmt.Sprintf("cd '%s' && %s; exec bash", workingDir, commandToRunInTerminal)
 		} else {
-			script = commandToRunInTerminal
+			script = fmt.Sprintf("%s; exec bash", commandToRunInTerminal)
 		}
 		cmd = exec.Command("x-terminal-emulator", "-e", "bash", "-c", script)
 
