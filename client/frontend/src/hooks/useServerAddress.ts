@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { notifications } from "@mantine/notifications";
 
-const STORAGE_KEY = "serverAddress";
+const SERVER_ADDRESS_STORAGE_KEY = "serverAddress";
 
 export function useServerAddress() {
   const [serverAddress, setServerAddress] = useState<string>("");
@@ -9,14 +9,16 @@ export function useServerAddress() {
 
   useEffect(() => {
     // Load the saved address from localStorage on initial render
-    const savedAddress = localStorage.getItem(STORAGE_KEY) || "http://localhost:8080";
+    const savedAddress =
+      localStorage.getItem(SERVER_ADDRESS_STORAGE_KEY) ||
+      "http://localhost:8080";
     setServerAddress(savedAddress);
     setNewServerAddress(savedAddress);
   }, []);
 
   const handleSaveServerAddress = useCallback(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, newServerAddress);
+      localStorage.setItem(SERVER_ADDRESS_STORAGE_KEY, newServerAddress);
       setServerAddress(newServerAddress);
       notifications.show({
         title: "Success",

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { notifications } from "@mantine/notifications";
 import { SaveAndRunArtifact } from "../../wailsjs/go/main/App";
+import { getApplications, getArtifact } from "../api/client";
 
 export interface Application {
   name: string;
@@ -19,15 +20,8 @@ export function useApplications(serverAddress: string) {
 
   const fetchApplications = useCallback(() => {
     if (!serverAddress) return;
-    const cleanedAddress = serverAddress.replace(/\/$/, "");
-    fetch(`${cleanedAddress}/api/v1/applications`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Server responded with ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data: Application[]) => {
+    getApplications(serverAddress)
+      .then((data) => {
         setApplications(data);
       })
       .catch((err) => {
@@ -56,16 +50,8 @@ export function useApplications(serverAddress: string) {
     setResultText(`Preparing to run '${app.name}'...`);
 
     try {
-      // 1. Fetch artifact from server
-      const cleanedAddress = serverAddress.replace(/\/$/, "");
-      const artifactUrl = `${cleanedAddress}/api/v1/applications/${encodeURIComponent(
-        app.name,
-      )}/artifact`;
-      const response = await fetch(artifactUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch artifact: ${await response.text()}`);
-      }
-      const blob = await response.blob();
+      // 1. Fetch artifact from server using the API client
+      const blob = await getArtifact(serverAddress, app.name);
       const fileData = new Uint8Array(await blob.arrayBuffer());
 
       // 2. Pass data to client's Go backend to save and run

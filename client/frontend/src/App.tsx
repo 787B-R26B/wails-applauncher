@@ -27,7 +27,7 @@ function App() {
   // Fetch applications whenever the address changes
   useEffect(() => {
     fetchApplications();
-  }, [serverAddress, fetchApplications]);
+  }, [serverAddress]);
 
   return (
     <Container p="md">

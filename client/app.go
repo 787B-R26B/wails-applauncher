@@ -40,45 +40,13 @@ func (a *App) SaveAndRunArtifact(isZip bool, fileData []byte, runCommand string)
 	var workingDir string
 
 	if isZip {
-		// Unzip logic
-		zipReader, err := zip.NewReader(bytes.NewReader(fileData), int64(len(fileData)))
-		if err != nil {
-			return "", fmt.Errorf("failed to read zip data: %w", err)
-		}
-		for _, file := range zipReader.File {
-			extractedFilePath := filepath.Join(tempDir, file.Name)
-			if file.FileInfo().IsDir() {
-				os.MkdirAll(extractedFilePath, file.Mode())
-				continue
-			}
-			fileReader, err := file.Open()
-			if err != nil {
-				return "", err
-			}
-			defer fileReader.Close()
-			targetFile, err := os.OpenFile(extractedFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
-			if err != nil {
-				return "", err
-			}
-			defer targetFile.Close()
-			if _, err := io.Copy(targetFile, fileReader); err != nil {
-				return "", err
-			}
-		}
-		workingDir = tempDir
-		commandToRunInTerminal = runCommand
+		workingDir, commandToRunInTerminal, err = unzipArtifact(fileData, tempDir, runCommand)
 	} else {
-		// Raw binary logic
-		executablePath := filepath.Join(tempDir, runCommand)
-		if runtime.GOOS == "windows" {
-			executablePath += ".exe"
-		}
-		err = os.WriteFile(executablePath, fileData, 0755)
-		if err != nil {
-			return "", fmt.Errorf("failed to write executable: %w", err)
-		}
-		workingDir = ""
-		commandToRunInTerminal = executablePath
+		workingDir = "" // For raw binaries, the command is the full path, so no specific working dir is needed.
+		commandToRunInTerminal, err = saveRawArtifact(fileData, tempDir, runCommand)
+	}
+	if err != nil {
+		return "", err // Handle errors from helpers
 	}
 
 	var cmd *exec.Cmd
@@ -104,10 +72,11 @@ func (a *App) SaveAndRunArtifact(isZip bool, fileData []byte, runCommand string)
 
 	case "linux":
 		var script string
+		// Append '; exec bash' to keep the terminal open after the command finishes.
 		if workingDir != "" {
-			script = fmt.Sprintf("cd '%s' && %s", workingDir, commandToRunInTerminal)
+			script = fmt.Sprintf("cd '%s' && %s; exec bash", workingDir, commandToRunInTerminal)
 		} else {
-			script = commandToRunInTerminal
+			script = fmt.Sprintf("%s; exec bash", commandToRunInTerminal)
 		}
 		cmd = exec.Command("x-terminal-emulator", "-e", "bash", "-c", script)
 
@@ -125,4 +94,48 @@ func (a *App) SaveAndRunArtifact(isZip bool, fileData []byte, runCommand string)
 	}
 
 	return fmt.Sprintf("Launched '%s' in a new terminal.", runCommand), nil
+}
+
+// unzipArtifact unpacks a zip archive into a temporary directory.
+// It returns the working directory, the command to run, and any error.
+func unzipArtifact(fileData []byte, tempDir, runCommand string) (string, string, error) {
+	zipReader, err := zip.NewReader(bytes.NewReader(fileData), int64(len(fileData)))
+	if err != nil {
+		return "", "", fmt.Errorf("failed to read zip data: %w", err)
+	}
+	for _, file := range zipReader.File {
+		extractedFilePath := filepath.Join(tempDir, file.Name)
+		if file.FileInfo().IsDir() {
+			os.MkdirAll(extractedFilePath, file.Mode())
+			continue
+		}
+		fileReader, err := file.Open()
+		if err != nil {
+			return "", "", err
+		}
+		defer fileReader.Close()
+		targetFile, err := os.OpenFile(extractedFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
+		if err != nil {
+			return "", "", err
+		}
+		defer targetFile.Close()
+		if _, err := io.Copy(targetFile, fileReader); err != nil {
+			return "", "", err
+		}
+	}
+	return tempDir, runCommand, nil
+}
+
+// saveRawArtifact saves a raw binary file to a temporary directory.
+// It returns the full path to the executable and any error.
+func saveRawArtifact(fileData []byte, tempDir, runCommand string) (string, error) {
+	executablePath := filepath.Join(tempDir, runCommand)
+	if runtime.GOOS == "windows" {
+		executablePath += ".exe"
+	}
+	err := os.WriteFile(executablePath, fileData, 0755)
+	if err != nil {
+		return "", fmt.Errorf("failed to write executable: %w", err)
+	}
+	return executablePath, nil
 }
