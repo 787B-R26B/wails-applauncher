@@ -21,10 +21,15 @@ type App struct {
 	RunCommand   string `json:"run_command"`
 }
 
+const (
+	serverFilesDir = "./server-files"
+	manifestPath   = serverFilesDir + "/manifest.json"
+)
+
 // --- Handlers ---
 
 func listApplications(w http.ResponseWriter, r *http.Request) {
-	manifestPath := "./server-files/manifest.json"
+	manifestPath := manifestPath
 	content, err := os.ReadFile(manifestPath)
 	if err != nil {
 		http.Error(w, "Failed to read manifest.json", http.StatusInternalServerError)
@@ -52,7 +57,7 @@ func getArtifact(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := os.ReadFile("./server-files/manifest.json")
+	content, err := os.ReadFile(manifestPath)
 	if err != nil {
 		http.Error(w, "Failed to read manifest", http.StatusInternalServerError)
 		return
