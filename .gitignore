@@ -9,3 +9,5 @@ client/frontend/package.json.md5
 server/server
 server/wails-applauncher-client
 server/server-files/dist
+
+.DS_Store
